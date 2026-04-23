@@ -22,6 +22,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout }) 
 
   if (isMobile) return null;
 
+  // Função para abrir o WhatsApp em uma nova aba
+  const handleWhatsAppClick = () => {
+    window.open('https://wa.me/554891039242', '_blank');
+  };
+
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>
@@ -42,6 +47,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onLogout }) 
             <span>{item.label}</span>
           </button>
         ))}
+        
+        {/* Novo botão do WhatsApp */}
+        <button 
+          className={styles.navItem}
+          onClick={handleWhatsAppClick}
+        >
+          <MessageCircle size={20} color="#25D366" /> {/* Cor oficial do WhatsApp para destacar, opcional */}
+          <span>WhatsApp</span>
+        </button>
       </nav>
 
       <div className={styles.footer}>
