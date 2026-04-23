@@ -1,0 +1,10 @@
+// src/components/Faq/Faq.tsx
+import { useState } from "react";
+import BgFaq from "../../assets/bg-faq.png"; // O fundo verde água
+import IconMobile from "../../assets/mobile.svg"; 
+import IconPromote from "../../assets/promote.svg"; 
+import IconMoney from "../../assets/moneys.svg"; 
+import IconBribe from "../../assets/bribe.svg"; 
+import IconYesNo from "../../assets/yesno.svg"; 
+import IconDecree from "../../assets/decree.svg"; 
+import "./Faq.css";

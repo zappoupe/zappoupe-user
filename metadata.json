@@ -1,0 +1,5 @@
+{
+  "name": "ZapPoupe",
+  "description": "Gerenciador de finanças pessoais via WhatsApp com painel administrativo personalizado.",
+  "requestFramePermissions": []
+}
