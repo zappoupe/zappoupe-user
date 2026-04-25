@@ -3,6 +3,8 @@ declare module "*.module.css" {
   export default classes;
 }
 
+declare module "*.css" {}
+
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_ANON_KEY: string;

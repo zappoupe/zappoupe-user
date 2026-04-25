@@ -12,9 +12,11 @@ interface EditProfileModalProps {
     nome: string;
     telefone: string;
   };
+  userSource?: 'assinaturas' | 'admin_users';
+  recordId?: string;
 }
 
-const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, onSuccess, initialData }) => {
+const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, onSuccess, initialData, userSource, recordId }) => {
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,15 +38,19 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado.');
 
-      const { error } = await supabase
-        .from('assinaturas')
-        .update({
-          nome,
-          telefone,
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
+      if (userSource === 'admin_users' && recordId) {
+        const { error } = await supabase
+          .from('admin_users')
+          .update({ nome, celular: telefone })
+          .eq('id', recordId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('assinaturas')
+          .update({ nome, telefone })
+          .eq('id', user.id);
+        if (error) throw error;
+      }
 
       onSuccess();
       onClose();

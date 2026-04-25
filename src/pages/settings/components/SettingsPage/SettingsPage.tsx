@@ -46,6 +46,8 @@ const SettingsPage: React.FC = () => {
 
   const [isFamilyMember, setIsFamilyMember] = useState(false);
   const [memberRecordId, setMemberRecordId] = useState<string | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [adminUserRecordId, setAdminUserRecordId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -89,32 +91,51 @@ const SettingsPage: React.FC = () => {
             .eq('id', familyMember.id);
         }
       } else {
-        // 2. Se não for membro, busca na tabela configuracoes_usuario (dono)
-        const { data, error } = await supabase
-          .from('configuracoes_usuario')
+        // 2. Verifica se é usuário admin (por email)
+        const { data: adminUser } = await supabase
+          .from('admin_users')
           .select('*')
-          .eq('id', user.id)
+          .eq('email', user.email)
           .maybeSingle();
 
-        if (error) throw error;
-
-        if (data) {
-          setBotTone(data.personalidade_bot || 'friendly');
-          setBotProactivity(data.proatividade_bot || 'medium');
-          setSurplusStrategy(data.sugestoes_excedente ?? true);
-          setAutoSaving(data.economia_automatica ?? false);
-          setPersonalizedTips(data.dicas_economia ?? true);
-          setIncomeRange(data.faixa_renda || '1001-5000');
-          setCustomIncome(data.renda_mensal?.toString() || '');
-          setMetas(data.metas || []);
+        if (adminUser) {
+          setIsAdminUser(true);
+          setAdminUserRecordId(adminUser.id);
+          setBotTone(adminUser.personalidade_bot || 'friendly');
+          setBotProactivity(adminUser.proatividade_bot || 'medium');
+          setSurplusStrategy(adminUser.sugestoes_excedente ?? true);
+          setAutoSaving(adminUser.economia_automatica ?? false);
+          setPersonalizedTips(adminUser.dicas_economia ?? true);
+          setIncomeRange(adminUser.faixa_renda || '1001-5000');
+          setCustomIncome(adminUser.renda_mensal?.toString() || '');
+          setMetas(adminUser.metas || []);
         } else {
-          // Se não existir, cria a linha inicial para o dono
-          await supabase.from('configuracoes_usuario').insert([{ 
-            id: user.id,
-            personalidade_bot: 'friendly',
-            proatividade_bot: 'medium',
-            faixa_renda: '1001-5000'
-          }]);
+          // 3. Se não for membro nem admin, busca na tabela configuracoes_usuario (dono)
+          const { data, error } = await supabase
+            .from('configuracoes_usuario')
+            .select('*')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (error) throw error;
+
+          if (data) {
+            setBotTone(data.personalidade_bot || 'friendly');
+            setBotProactivity(data.proatividade_bot || 'medium');
+            setSurplusStrategy(data.sugestoes_excedente ?? true);
+            setAutoSaving(data.economia_automatica ?? false);
+            setPersonalizedTips(data.dicas_economia ?? true);
+            setIncomeRange(data.faixa_renda || '1001-5000');
+            setCustomIncome(data.renda_mensal?.toString() || '');
+            setMetas(data.metas || []);
+          } else {
+            await supabase.from('configuracoes_usuario').insert([{
+              id: user.id,
+              personalidade_bot: 'friendly',
+              proatividade_bot: 'medium',
+              faixa_renda: '1001-5000'
+            }]);
+          }
         }
       }
     } catch (err) {
@@ -149,9 +170,20 @@ const SettingsPage: React.FC = () => {
           .from('membros_familia')
           .update(updateData)
           .eq('id', memberRecordId);
-        
+
         if (error) {
           console.error('Erro ao salvar em membros_familia:', error);
+          throw error;
+        }
+      } else if (isAdminUser && adminUserRecordId) {
+        // Salva na tabela admin_users
+        const { error } = await supabase
+          .from('admin_users')
+          .update(updateData)
+          .eq('id', adminUserRecordId);
+
+        if (error) {
+          console.error('Erro ao salvar em admin_users:', error);
           throw error;
         }
       } else {
@@ -162,7 +194,7 @@ const SettingsPage: React.FC = () => {
             id: user.id,
             ...updateData
           });
-        
+
         if (error) {
           console.error('Erro ao salvar em configuracoes_usuario:', error);
           throw error;

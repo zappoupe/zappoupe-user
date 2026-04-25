@@ -27,6 +27,8 @@ interface Assinatura {
 const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null);
   const [isOwner, setIsOwner] = useState(true);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [adminUserRecordId, setAdminUserRecordId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -35,8 +37,6 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
   const fetchAssinatura = async (userId: string, userMetadata: any, email: string) => {
     try {
-      console.log('Buscando dados do perfil para:', userId, email);
-      
       // 1. Verificar se é um membro da família convidado (Busca por ID ou Email)
       const { data: familyMember, error: familyError } = await supabase
         .from('membros_familia')
@@ -46,47 +46,92 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
 
       if (familyError) console.error('Erro ao buscar membro_familia:', familyError);
 
-      // Se encontrou na tabela de membros, ele NÃO é o dono
-      const currentlyIsOwner = !familyMember;
-      setIsOwner(currentlyIsOwner);
-      
-      // O ID do dono para buscar a assinatura
-      const targetOwnerId = familyMember ? familyMember.dono_id : userId;
+      if (familyMember) {
+        setIsOwner(false);
+        setIsAdminUser(false);
 
-      console.log('Status:', currentlyIsOwner ? 'Dono da Conta' : 'Membro da Família');
-      console.log('Buscando assinatura do ID:', targetOwnerId);
+        const { data: subscriptionData, error: fetchError } = await supabase
+          .from('assinaturas')
+          .select('*')
+          .eq('id', familyMember.dono_id)
+          .maybeSingle();
 
-      // 2. Buscar assinatura (sempre do dono da conta para pegar o plano/status)
+        if (fetchError) {
+          console.error('Erro ao buscar assinatura:', fetchError);
+          setError(fetchError.message);
+        } else {
+          setAssinatura({
+            ...(subscriptionData || {
+              id: userId,
+              plano: 'Nenhum',
+              is_anual: false,
+              membros_extras: 0,
+              ativo: false,
+              stripe_customer_id: null,
+              criado_em: null
+            }),
+            nome: familyMember.nome,
+            email: familyMember.email,
+            telefone: familyMember.telefone
+          });
+        }
+        return;
+      }
+
+      // 2. Verificar se é usuário admin (por email)
+      const { data: adminUserData } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (adminUserData) {
+        setIsOwner(false);
+        setIsAdminUser(true);
+        setAdminUserRecordId(adminUserData.id);
+
+        const planName = adminUserData.plano_vitalicio
+          ? 'Vitalício'
+          : adminUserData.usuario_teste
+            ? 'Teste'
+            : 'Gratuito';
+
+        setAssinatura({
+          id: adminUserData.id,
+          nome: adminUserData.nome,
+          email: adminUserData.email,
+          telefone: adminUserData.celular || null,
+          plano: planName,
+          is_anual: false,
+          membros_extras: 0,
+          ativo: adminUserData.ativo ?? true,
+          stripe_customer_id: null,
+          criado_em: adminUserData.criado_em || null
+        });
+        return;
+      }
+
+      // 3. É o dono da conta (assinatura normal)
+      setIsOwner(true);
+      setIsAdminUser(false);
+
       const { data: subscriptionData, error: fetchError } = await supabase
         .from('assinaturas')
         .select('*')
-        .eq('id', targetOwnerId)
+        .eq('id', userId)
         .maybeSingle();
 
       if (fetchError) {
         console.error('Erro ao buscar assinatura:', fetchError);
         setError(fetchError.message);
       } else if (subscriptionData) {
-        if (currentlyIsOwner) {
-          // Se for o dono, usa os dados da tabela assinaturas
-          setAssinatura(subscriptionData);
-        } else {
-          // Se for membro, pega o Plano e Status do dono, mas Nome, Email e Telefone da tabela membros_familia
-          setAssinatura({
-            ...subscriptionData,
-            nome: familyMember.nome,
-            email: familyMember.email,
-            telefone: familyMember.telefone
-          });
-        }
+        setAssinatura(subscriptionData);
       } else {
-        console.warn('Nenhuma assinatura encontrada para o dono:', targetOwnerId);
-        // Fallback: Se não achou assinatura, mostra os dados básicos do usuário
         setAssinatura({
           id: userId,
-          nome: currentlyIsOwner ? (userMetadata?.full_name || email.split('@')[0]) : familyMember.nome,
-          email: currentlyIsOwner ? email : familyMember.email,
-          telefone: currentlyIsOwner ? null : familyMember.telefone,
+          nome: userMetadata?.full_name || email.split('@')[0],
+          email: email,
+          telefone: null,
           plano: 'Nenhum',
           is_anual: false,
           membros_extras: 0,
@@ -291,7 +336,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         </div>
       </div>
 
-      <EditProfileModal 
+      <EditProfileModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSuccess={() => {
@@ -304,6 +349,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
           nome: userData.name,
           telefone: userData.phone
         }}
+        userSource={isAdminUser ? 'admin_users' : 'assinaturas'}
+        recordId={isAdminUser ? (adminUserRecordId || undefined) : undefined}
       />
 
       <ManagePlanModal 

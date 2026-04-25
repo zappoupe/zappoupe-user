@@ -43,18 +43,24 @@ const MainContent: React.FC<MainContentProps> = ({ activeTab, setActiveTab, onLo
         if (familyMember?.nome) {
           setUserName(familyMember.nome);
         } else {
-          // 2. Se não for membro, tenta pegar da tabela assinaturas (dono)
-          const { data: assinatura } = await supabase
-            .from('assinaturas')
+          // 2. Verifica se é usuário admin (por email)
+          const { data: adminUser } = await supabase
+            .from('admin_users')
             .select('nome')
-            .eq('id', user.id)
+            .eq('email', userEmail)
             .maybeSingle();
-          
-          if (assinatura?.nome) {
-            setUserName(assinatura.nome);
+
+          if (adminUser?.nome) {
+            setUserName(adminUser.nome);
           } else {
-            // Fallback para metadata ou email
-            setUserName(user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário');
+            // 3. Se não for membro nem admin, tenta pegar da tabela assinaturas (dono)
+            const { data: assinatura } = await supabase
+              .from('assinaturas')
+              .select('nome')
+              .eq('id', user.id)
+              .maybeSingle();
+
+            setUserName(assinatura?.nome || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuário');
           }
         }
       }
