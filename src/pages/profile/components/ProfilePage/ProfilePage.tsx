@@ -353,10 +353,16 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
         recordId={isAdminUser ? (adminUserRecordId || undefined) : undefined}
       />
 
-      <ManagePlanModal 
+      <ManagePlanModal
         isOpen={isManageModalOpen}
         onClose={() => setIsManageModalOpen(false)}
         onCancelSuccess={() => {
+          const user = supabase.auth.getUser();
+          user.then(({ data: { user } }) => {
+            if (user) fetchAssinatura(user.id, user.user_metadata, user.email || '');
+          });
+        }}
+        onUpgradeSuccess={() => {
           const user = supabase.auth.getUser();
           user.then(({ data: { user } }) => {
             if (user) fetchAssinatura(user.id, user.user_metadata, user.email || '');

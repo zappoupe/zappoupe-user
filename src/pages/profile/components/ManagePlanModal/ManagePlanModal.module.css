@@ -187,6 +187,35 @@
   margin-top: 0.5rem;
 }
 
+.upgradeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--accent-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(54, 88, 36, 0.2);
+}
+
+.upgradeBtn:hover:not(:disabled) {
+  background-color: #4a7a3a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(54, 88, 36, 0.3);
+}
+
+.upgradeBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .cancelBtn {
   display: flex;
   align-items: center;
@@ -357,6 +386,145 @@
 .finishBtn:hover {
   background-color: #4a7a3a;
   transform: translateY(-2px);
+}
+
+.successIconWrapperGold {
+  width: 80px;
+  height: 80px;
+  background-color: #fefce8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #eab308;
+  margin-bottom: 0.5rem;
+}
+
+/* Upgrade confirmation view */
+.upgradeView {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.upgradeCompare {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.planCompareCard {
+  flex: 1;
+  background-color: #f3f4f6;
+  border-radius: 16px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.planCompareCardNew {
+  background: linear-gradient(135deg, var(--accent-primary), #4a7a3a);
+  color: #ffffff;
+}
+
+.compareLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.planCompareCardNew .compareLabel {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.comparePlanName {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--text-dark-primary);
+  margin-bottom: 0.25rem;
+}
+
+.planCompareCardNew .comparePlanName {
+  color: #ffffff;
+}
+
+.comparePrice {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--text-dark-primary);
+}
+
+.comparePrice span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.planCompareCardNew .comparePrice {
+  color: #ffffff;
+}
+
+.upgradeArrow {
+  width: 36px;
+  height: 36px;
+  background-color: var(--accent-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.upgradeFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background-color: #f0fdf4;
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.upgradeFeatureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-dark-primary);
+}
+
+.checkIcon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.confirmUpgradeBtn {
+  width: 100%;
+  padding: 1.25rem;
+  background-color: var(--accent-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(54, 88, 36, 0.2);
+}
+
+.confirmUpgradeBtn:hover:not(:disabled) {
+  background-color: #4a7a3a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(54, 88, 36, 0.3);
+}
+
+.confirmUpgradeBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 @media (max-width: 480px) {
