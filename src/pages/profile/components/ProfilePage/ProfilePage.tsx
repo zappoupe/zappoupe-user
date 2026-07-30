@@ -20,6 +20,8 @@ interface Assinatura {
   is_anual: boolean | null;
   membros_extras: number | null;
   ativo: boolean | null;
+  status: string | null;
+  cancelado_em: string | null;
   stripe_customer_id: string | null;
   criado_em: string | null;
 }
@@ -183,7 +185,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ onLogout }) => {
     email: assinatura?.email || 'Não informado',
     phone: assinatura?.telefone || 'Não informado',
     plan: assinatura?.plano || 'Nenhum',
-    status: assinatura?.ativo ? 'Ativo' : 'Inativo',
+    // 'canceling' = cancelamento agendado; acesso segue ativo até o fim do período
+    status: assinatura?.status === 'canceling'
+      ? 'Cancelando'
+      : (assinatura?.ativo ? 'Ativo' : 'Inativo'),
     isAnual: assinatura?.is_anual || false,
     membrosExtras: assinatura?.membros_extras || 0
   };

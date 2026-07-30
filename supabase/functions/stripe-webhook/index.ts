@@ -164,6 +164,21 @@ serve(async (req) => {
         return new Response(JSON.stringify({ received: true, deactivated: true }), { status: 200 });
       }
 
+      case 'customer.subscription.updated': {
+        // Reflete no banco um cancelamento agendado (cancel_at_period_end),
+        // inclusive quando feito direto no painel do Stripe pelo suporte.
+        // Não mexe em `ativo`: o acesso segue até o fim do período, quando
+        // chega o 'customer.subscription.deleted'.
+        const sub = event.data.object as any;
+        if (sub.cancel_at_period_end) {
+          await supabaseAdmin
+            .from('assinaturas')
+            .update({ status: 'canceling' })
+            .eq('stripe_subscription_id', sub.id);
+        }
+        return new Response(JSON.stringify({ received: true }), { status: 200 });
+      }
+
       case 'customer.subscription.deleted': {
         const sub = event.data.object as any;
         await deactivateBySubscription(sub.id);

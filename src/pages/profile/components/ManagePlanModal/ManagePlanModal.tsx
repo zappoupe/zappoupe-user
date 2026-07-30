@@ -54,21 +54,22 @@ const ManagePlanModal: React.FC<ManagePlanModalProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const { error: updateError } = await supabase
-        .from('assinaturas')
-        .update({
-          ativo: false,
-          cancelado_em: new Date().toISOString(),
-        })
-        .eq('id', planData.id);
+      // Cancela de verdade no Stripe (fim do período) via Edge Function.
+      // O invoke já envia o JWT da sessão, então o servidor cancela só a
+      // assinatura do próprio usuário. Fazer só um UPDATE no banco aqui NÃO
+      // pararia a cobrança no Stripe — por isso vai pela função.
+      const { data, error: fnError } = await supabase.functions.invoke('cancel-subscription', {
+        method: 'POST',
+      });
 
-      if (updateError) throw updateError;
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
 
       setView('cancel-success');
       if (onCancelSuccess) onCancelSuccess();
     } catch (err: any) {
       console.error('Erro ao cancelar assinatura:', err);
-      setError('Não foi possível cancelar sua assinatura. Tente novamente mais tarde.');
+      setError(err?.message || 'Não foi possível cancelar sua assinatura. Tente novamente mais tarde.');
     } finally {
       setIsLoading(false);
     }
@@ -223,21 +224,28 @@ const ManagePlanModal: React.FC<ManagePlanModalProps> = ({
                       <button
                         className={styles.upgradeBtn}
                         onClick={() => setView('upgrade-confirm')}
-                        disabled={planData.status === 'Inativo'}
+                        disabled={planData.status !== 'Ativo'}
                       >
                         <ArrowUp size={16} />
                         <span>Upgrade para Plano Family</span>
                       </button>
                     )}
 
-                    <button
-                      className={styles.cancelBtn}
-                      onClick={() => setView('cancel-confirm')}
-                      disabled={planData.status === 'Inativo'}
-                    >
-                      <AlertCircle size={16} />
-                      <span>Cancelar Assinatura</span>
-                    </button>
+                    {planData.status === 'Cancelando' ? (
+                      <p className={styles.cancelingNote}>
+                        Cancelamento agendado. Você mantém acesso até o fim do período já pago e
+                        não haverá novas cobranças.
+                      </p>
+                    ) : (
+                      <button
+                        className={styles.cancelBtn}
+                        onClick={() => setView('cancel-confirm')}
+                        disabled={planData.status !== 'Ativo'}
+                      >
+                        <AlertCircle size={16} />
+                        <span>Cancelar Assinatura</span>
+                      </button>
+                    )}
                   </div>
                 </>
               )}
